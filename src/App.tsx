@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import "@fontsource/bebas-neue";
 import "./index.css";
 import ClockIcon from "./assets/clock.png";
 import RunIcon from "./assets/figure.run.png";
