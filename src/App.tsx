@@ -12,6 +12,7 @@ function App() {
   const [winner, setWinner] = useState<null | number>(null);
 
   const intervalRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (startTime && !winner) {
@@ -62,10 +63,28 @@ function App() {
     setWinner(null);
   };
 
+  const handleGlobalClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+
+    // Evitar activar fullscreen si se clickeó una barra
+    if (target.closest(".progress-bar")) return;
+
+    // Activar fullscreen si no estamos ya en él
+    if (containerRef.current && !document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch((err) => {
+        console.error("Error al entrar en fullscreen:", err);
+      });
+    }
+  };
+
   const time = formatTime(elapsed);
 
   return (
-    <div className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] text-[#a19246] font-bebas flex items-center justify-center overflow-hidden relative">
+    <div
+      ref={containerRef}
+      onClick={handleGlobalClick}
+      className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] text-[#a19246] font-bebas flex items-center justify-center overflow-hidden relative"
+    >
       {/* Logo */}
       <img
         src={LalaLogo}
@@ -115,7 +134,7 @@ function App() {
         {/* Barras */}
         <div className="flex justify-center gap-40 items-center h-full relative z-10">
           <div
-            className="relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
+            className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
             onClick={() => increase(1)}
           >
             <div
@@ -130,7 +149,7 @@ function App() {
           </div>
 
           <div
-            className="relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
+            className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
             onClick={() => increase(2)}
           >
             <div
