@@ -25,7 +25,6 @@ function App() {
 
   const increase = (player: number) => {
     if (!startTime) setStartTime(new Date());
-
     if (winner) return;
 
     if (player === 1) {
@@ -94,27 +93,30 @@ function App() {
 
       <div className="max-w-[1440px] w-full h-[90vh] grid grid-cols-3 items-center px-12">
         {/* Izquierda */}
-        <div className="flex flex-col justify-between h-full py-8 items-end text-right">
-          <div className="space-y-2">
+        <div className="flex flex-col justify-between h-full items-end text-right">
+          {/* TIEMPO */}
+          <div className="space-y-1 pt-20">
             <div className="flex flex-col items-end gap-1">
               <img src={ClockIcon} alt="Clock" className="w-10 h-10" />
               <div className="text-[32px]">TIEMPO</div>
             </div>
-            <div className="text-[100px] leading-[100px]">{time.minSec}</div>
-            <div className="text-[100px]">{time.ms}</div>
+            <div className="text-[90px] leading-[90px]">{time.minSec}</div>
+            <div className="text-[80px] leading-[80px] -mt-4">{time.ms}</div>
           </div>
-          <div className="space-y-1">
-            <div className="text-[40px]">JUGADOR</div>
-            <div className="text-[80px] flex items-center justify-end gap-3">
-              <img src={RunIcon} alt="Jugador 1" className="w-16 h-16" />1
+
+          {/* JUGADOR */}
+          <div className="space-y-1 pb-[6px]">
+            <div className="text-[36px]">JUGADOR</div>
+            <div className="text-[72px] flex items-center justify-end gap-2">
+              <img src={RunIcon} alt="Jugador 1" className="w-14 h-14" />1
             </div>
           </div>
         </div>
 
         {/* Barras */}
-        <div className="flex justify-center gap-40 items-end h-full relative z-10">
+        <div className="flex justify-center gap-40 items-center h-full relative z-10">
           <div
-            className="relative w-[90px] h-full bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
+            className="relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
             onClick={() => increase(1)}
           >
             <div
@@ -129,7 +131,7 @@ function App() {
           </div>
 
           <div
-            className="relative w-[90px] h-full bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
+            className="relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
             onClick={() => increase(2)}
           >
             <div
@@ -145,19 +147,22 @@ function App() {
         </div>
 
         {/* Derecha */}
-        <div className="flex flex-col justify-between h-full py-8 items-start text-left">
-          <div className="space-y-2">
+        <div className="flex flex-col justify-between h-full items-start text-left">
+          {/* TIEMPO */}
+          <div className="space-y-1 pt-20">
             <div className="flex flex-col items-start gap-1">
               <img src={ClockIcon} alt="Clock" className="w-10 h-10" />
               <div className="text-[32px]">TIEMPO</div>
             </div>
-            <div className="text-[100px] leading-[100px]">{time.minSec}</div>
-            <div className="text-[100px]">{time.ms}</div>
+            <div className="text-[90px] leading-[90px]">{time.minSec}</div>
+            <div className="text-[80px] leading-[80px] -mt-4">{time.ms}</div>
           </div>
-          <div className="space-y-1">
-            <div className="text-[40px]">JUGADOR</div>
-            <div className="text-[80px] flex items-center justify-start gap-3">
-              2<img src={RunIcon} alt="Jugador 2" className="w-16 h-16" />
+
+          {/* JUGADOR */}
+          <div className="space-y-1 pb-[6px]">
+            <div className="text-[36px]">JUGADOR</div>
+            <div className="text-[72px] flex items-center justify-start gap-2">
+              2<img src={RunIcon} alt="Jugador 2" className="w-14 h-14" />
             </div>
           </div>
         </div>
