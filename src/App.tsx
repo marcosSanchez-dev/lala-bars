@@ -139,9 +139,9 @@ function App() {
 
       <div className="max-w-[1440px] w-full h-[90vh] grid grid-cols-3 items-center px-12">
         {/* Izquierda */}
-        <div className="flex flex-col justify-between h-full items-end text-right">
+        <div className="flex flex-col justify-center h-full items-end text-right gap-32">
           {/* TIEMPO */}
-          <div className="space-y-1 pt-20">
+          <div className="space-y-1 pt-20  ">
             <div className="flex flex-col items-end gap-1">
               <img src={ClockIcon} alt="Clock" className="w-10 h-10" />
               <div className="text-[32px]">TIEMPO</div>
@@ -151,7 +151,7 @@ function App() {
           </div>
 
           {/* JUGADOR */}
-          <div className="space-y-1 pb-[6px]">
+          <div className="space-y-1 pb-[6px]  ">
             <div className="text-[36px]">JUGADOR</div>
             <div className="text-[72px] flex items-center justify-end gap-2">
               <img src={RunIcon} alt="Jugador 1" className="w-14 h-14" />1
@@ -187,9 +187,9 @@ function App() {
         </div>
 
         {/* Derecha */}
-        <div className="flex flex-col justify-between h-full items-start text-left">
+        <div className="flex flex-col justify-center h-full items-start text-left gap-32">
           {/* TIEMPO */}
-          <div className="space-y-1 pt-20">
+          <div className="space-y-1 pt-20 ">
             <div className="flex flex-col items-start gap-1">
               <img src={ClockIcon} alt="Clock" className="w-10 h-10" />
               <div className="text-[32px]">TIEMPO</div>
@@ -199,7 +199,7 @@ function App() {
           </div>
 
           {/* JUGADOR */}
-          <div className="space-y-1 pb-[6px]">
+          <div className="space-y-1 pb-[6px] ">
             <div className="text-[36px]">JUGADOR</div>
             <div className="text-[72px] flex items-center justify-start gap-2">
               2<img src={RunIcon} alt="Jugador 2" className="w-14 h-14" />
