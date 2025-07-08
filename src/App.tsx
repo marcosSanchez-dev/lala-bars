@@ -14,6 +14,34 @@ function App() {
   const intervalRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // 🟢 WebSocket para recibir mensajes UDP reenviados
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:8080");
+
+    socket.onopen = () => {
+      console.log("🌐 Conectado al servidor WebSocket");
+    };
+
+    socket.onmessage = (event) => {
+      const msg = event.data.trim();
+      console.log("📨 Mensaje WebSocket recibido:", msg);
+
+      if (msg === "PLAYER1") {
+        increase(1);
+      } else if (msg === "PLAYER2") {
+        increase(2);
+      }
+    };
+
+    socket.onerror = (err) => {
+      console.error("❌ Error WebSocket:", err);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
   useEffect(() => {
     if (startTime && !winner) {
       intervalRef.current = window.setInterval(() => {
@@ -133,10 +161,7 @@ function App() {
 
         {/* Barras */}
         <div className="flex justify-center gap-40 items-center h-full relative z-10">
-          <div
-            className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
-            onClick={() => increase(1)}
-          >
+          <div className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
             <div
               className="w-full rounded-[20px] transition-all duration-300 ease-in-out"
               style={{
@@ -148,10 +173,7 @@ function App() {
             />
           </div>
 
-          <div
-            className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end cursor-pointer"
-            onClick={() => increase(2)}
-          >
+          <div className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
             <div
               className="w-full rounded-[20px] transition-all duration-300 ease-in-out"
               style={{
