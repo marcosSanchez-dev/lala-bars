@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./index.css";
 import ClockIcon from "./assets/clock.png";
+import Frame13_text from "./assets/frame13_text.png";
 import RunIcon from "./assets/figure.run.png";
 import LalaLogo from "./assets/Lala_Logo.png";
 import PlayerReady from "./scenes/PlayerReady";
@@ -17,6 +18,8 @@ function App() {
   const [player2Ready, setPlayer2Ready] = useState(false);
   const [progress1, setProgress1] = useState(0);
   const [progress2, setProgress2] = useState(0);
+  const [tutorialBar1, setTutorialBar1] = useState(0); // Nuevo estado para barra tutorial 1
+  const [tutorialBar2, setTutorialBar2] = useState(0); // Nuevo estado para barra tutorial 2
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [winner, setWinner] = useState<null | number>(null);
@@ -57,6 +60,18 @@ function App() {
           setCurrentScene("playerReady");
         } else if (msg === "FRAME13") {
           setCurrentScene("tutorial");
+        } else if (msg.startsWith("BARRA1_")) {
+          // Manejar mensajes de barra 1 en tutorial
+          const value = parseInt(msg.replace("BARRA1_", ""), 10);
+          if (!isNaN(value)) {
+            setTutorialBar1(value);
+          }
+        } else if (msg.startsWith("BARRA2_")) {
+          // Manejar mensajes de barra 2 en tutorial
+          const value = parseInt(msg.replace("BARRA2_", ""), 10);
+          if (!isNaN(value)) {
+            setTutorialBar2(value);
+          }
         }
 
         if (msg === "PLAYER1") increase(1);
@@ -139,6 +154,8 @@ function App() {
   const resetGame = () => {
     setProgress1(0);
     setProgress2(0);
+    setTutorialBar1(0); // Resetear barra tutorial 1
+    setTutorialBar2(0); // Resetear barra tutorial 2
     setStartTime(null);
     setElapsed(0);
     setWinner(null);
@@ -196,14 +213,50 @@ function App() {
 
   if (currentScene === "tutorial")
     return (
-      <div className="w-screen h-screen bg-blue-900 text-white flex flex-col items-center justify-center text-5xl">
-        Tutorial aquí
-        <button
-          onClick={() => setCurrentScene("game")}
-          className="mt-8 px-6 py-3 bg-white text-blue-900 rounded-full"
-        >
-          Ir a juego →
-        </button>
+      <div className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] flex flex-col items-center justify-center">
+        <div className="flex gap-24 items-end">
+          <img
+            src={LalaLogo}
+            alt="Lala Logo"
+            className="absolute top-8 right-12 w-[150px] object-contain"
+          />
+          {/* Barra Jugador 1 */}
+          <div className="h-full grid place-items-center">
+            <img src={Frame13_text} alt="Clock" className="w-[10rem]" />
+          </div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="progress-bar relative w-24 h-[700px] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
+              <div
+                className="w-full rounded-[20px] transition-all duration-300 ease-in-out"
+                style={{
+                  height: `${tutorialBar1}%`,
+                  marginBottom: "6px",
+                  background:
+                    "linear-gradient(to top, #fcb045 0%, #fd7e37 100%)",
+                  boxShadow: "0 8px 20px rgba(255, 167, 36, 0.3)",
+                }}
+              />
+            </div>
+          </div>
+          {/* Barra Jugador 2 */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="progress-bar relative w-24 h-[700px] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
+              <div
+                className="w-full rounded-[20px] transition-all duration-300 ease-in-out"
+                style={{
+                  height: `${tutorialBar2}%`,
+                  marginBottom: "6px",
+                  background:
+                    "linear-gradient(to top, #fcb045 0%, #fd7e37 100%)",
+                  boxShadow: "0 8px 20px rgba(255, 167, 36, 0.3)",
+                }}
+              />
+            </div>
+          </div>
+          <div className="h-full grid place-items-center">
+            <img src={Frame13_text} alt="Clock" className="w-[10rem]" />
+          </div>
+        </div>
       </div>
     );
 
