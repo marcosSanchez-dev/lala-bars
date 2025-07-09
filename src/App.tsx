@@ -55,7 +55,8 @@ function App() {
           setPlayer2Ready(true);
           readyPlayerRef.current = 0;
           setCurrentScene("playerReady");
-          setTimeout(() => setCurrentScene("tutorial"), 2000);
+        } else if (msg === "FRAME13") {
+          setCurrentScene("tutorial");
         }
 
         if (msg === "PLAYER1") increase(1);
