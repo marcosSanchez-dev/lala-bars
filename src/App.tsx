@@ -3,53 +3,101 @@ import "./index.css";
 import ClockIcon from "./assets/clock.png";
 import RunIcon from "./assets/figure.run.png";
 import LalaLogo from "./assets/Lala_Logo.png";
+import PlayerReady from "./scenes/PlayerReady";
+import StandbyScene from "./scenes/StandbyScene";
 
 function App() {
+  const [currentScene, setCurrentScene] = useState<
+    "slideshow" | "playerReady" | "tutorial" | "game"
+  >("slideshow");
+
+  const [readyPlayer, setReadyPlayer] = useState<0 | 1 | 2 | null>(null);
   const [progress1, setProgress1] = useState(0);
   const [progress2, setProgress2] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [winner, setWinner] = useState<null | number>(null);
-
-  const intervalRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
-  // 🟢 WebSocket para recibir mensajes UDP reenviados
+  // 🧠 WebSocket con reconexión
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080");
+    let socket: WebSocket;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let isMounted = true;
 
-    socket.onopen = () => {
-      console.log("🌐 Conectado al servidor WebSocket");
+    const connect = () => {
+      if (!isMounted) return;
+      socket = new WebSocket("ws://localhost:8080");
+
+      socket.onopen = () => {
+        if (!isMounted) return;
+        console.log("🌐 Conectado a WebSocket");
+        reconnectAttempts = 0;
+      };
+
+      socket.onmessage = (event) => {
+        if (!isMounted) return;
+        const msg = event.data.trim();
+        console.log("📨 Mensaje WebSocket recibido:", msg);
+
+        if (msg === "PLAYER1_READY") {
+          setReadyPlayer(1);
+          setCurrentScene("playerReady");
+        } else if (msg === "PLAYER2_READY") {
+          setReadyPlayer(2);
+          setCurrentScene("playerReady");
+        } else if (msg === "BOTH_PLAYERS_READY") {
+          setReadyPlayer(0); // 0 indica ambos
+          setCurrentScene("playerReady");
+          setTimeout(() => setCurrentScene("tutorial"), 2000);
+        }
+
+        if (msg === "PLAYER1") increase(1);
+        if (msg === "PLAYER2") increase(2);
+      };
+
+      socket.onerror = (err) => {
+        if (!isMounted) return;
+        console.error("❌ Error WebSocket:", err);
+      };
+
+      socket.onclose = () => {
+        if (!isMounted) return;
+        console.log("🔌 WebSocket cerrado");
+
+        if (reconnectAttempts < maxReconnectAttempts && isMounted) {
+          const delay = Math.min(3000, 1000 * (reconnectAttempts + 1));
+          console.log(`⏳ Reconectando en ${delay}ms...`);
+          setTimeout(() => {
+            if (isMounted) connect();
+          }, delay);
+          reconnectAttempts++;
+        }
+      };
     };
 
-    socket.onmessage = (event) => {
-      const msg = event.data.trim();
-      console.log("📨 Mensaje WebSocket recibido:", msg);
-
-      if (msg === "PLAYER1") {
-        increase(1);
-      } else if (msg === "PLAYER2") {
-        increase(2);
-      }
-    };
-
-    socket.onerror = (err) => {
-      console.error("❌ Error WebSocket:", err);
-    };
+    connect();
 
     return () => {
-      socket.close();
+      isMounted = false;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (startTime && !winner) {
+    if (currentScene === "game" && startTime && !winner) {
       intervalRef.current = window.setInterval(() => {
         setElapsed(Date.now() - startTime.getTime());
       }, 10);
     }
-    return () => clearInterval(intervalRef.current!);
-  }, [startTime, winner]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [startTime, winner, currentScene]);
 
   const increase = (player: number) => {
     if (!startTime) setStartTime(new Date());
@@ -89,24 +137,41 @@ function App() {
     setStartTime(null);
     setElapsed(0);
     setWinner(null);
+    setReadyPlayer(null);
+    setCurrentScene("slideshow");
   };
 
   const handleGlobalClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-
-    // Evitar activar fullscreen si se clickeó una barra
     if (target.closest(".progress-bar")) return;
 
-    // Activar fullscreen si no estamos ya en él
     if (containerRef.current && !document.fullscreenElement) {
       containerRef.current.requestFullscreen().catch((err) => {
-        console.error("Error al entrar en fullscreen:", err);
+        console.error("Error fullscreen:", err);
       });
     }
   };
 
   const time = formatTime(elapsed);
 
+  // 🎬 RENDER ESCENAS
+  if (currentScene === "slideshow") return <StandbyScene />;
+  if (currentScene === "playerReady" && readyPlayer !== null)
+    return <PlayerReady player={readyPlayer} />;
+  if (currentScene === "tutorial")
+    return (
+      <div className="w-screen h-screen bg-blue-900 text-white flex flex-col items-center justify-center text-5xl">
+        Tutorial aquí
+        <button
+          onClick={() => setCurrentScene("game")}
+          className="mt-8 px-6 py-3 bg-white text-blue-900 rounded-full"
+        >
+          Ir a juego →
+        </button>
+      </div>
+    );
+
+  // 🎮 ESCENA DEL JUEGO
   return (
     <div
       ref={containerRef}
