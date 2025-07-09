@@ -8,24 +8,27 @@ import PlayerReady from "./scenes/PlayerReady";
 import StandbyScene from "./scenes/StandbyScene";
 import Player1ReadyImg from "./assets/player1_ready.jpeg";
 import Player2ReadyImg from "./assets/player2_ready.jpeg";
+import Frame14_text from "./assets/frame14_text.png";
 
 function App() {
   const [currentScene, setCurrentScene] = useState<
-    "slideshow" | "playerReady" | "tutorial" | "game"
+    "slideshow" | "playerReady" | "tutorial" | "game" | "frame13" | "frame14"
   >("slideshow");
 
   const [player1Ready, setPlayer1Ready] = useState(false);
   const [player2Ready, setPlayer2Ready] = useState(false);
   const [progress1, setProgress1] = useState(0);
   const [progress2, setProgress2] = useState(0);
-  const [tutorialBar1, setTutorialBar1] = useState(0); // Nuevo estado para barra tutorial 1
-  const [tutorialBar2, setTutorialBar2] = useState(0); // Nuevo estado para barra tutorial 2
+  const [tutorialBar1, setTutorialBar1] = useState(0);
+  const [tutorialBar2, setTutorialBar2] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [winner, setWinner] = useState<null | number>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const intervalRef = useRef<number | null>(null);
   const readyPlayerRef = useRef<0 | 1 | 2 | null>(null);
+  const countdownRef = useRef<number | null>(null);
 
   // 🧠 WebSocket con reconexión
   useEffect(() => {
@@ -60,14 +63,19 @@ function App() {
           setCurrentScene("playerReady");
         } else if (msg === "FRAME13") {
           setCurrentScene("tutorial");
+        } else if (msg === "FRAME14") {
+          setCurrentScene("frame14");
+          // Iniciar cuenta regresiva al entrar a FRAME14
+          setCountdown(3);
+        } else if (msg === "CONTINUE") {
+          // Mensaje para continuar después de la cuenta regresiva
+          setCountdown(null);
         } else if (msg.startsWith("BARRA1_")) {
-          // Manejar mensajes de barra 1 en tutorial
           const value = parseInt(msg.replace("BARRA1_", ""), 10);
           if (!isNaN(value)) {
             setTutorialBar1(value);
           }
         } else if (msg.startsWith("BARRA2_")) {
-          // Manejar mensajes de barra 2 en tutorial
           const value = parseInt(msg.replace("BARRA2_", ""), 10);
           if (!isNaN(value)) {
             setTutorialBar2(value);
@@ -107,6 +115,32 @@ function App() {
       }
     };
   }, []);
+
+  // Efecto para la cuenta regresiva
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      countdownRef.current = window.setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === 1) {
+            // Detener en 1 hasta recibir mensaje CONTINUE
+            if (countdownRef.current) {
+              clearInterval(countdownRef.current);
+              countdownRef.current = null;
+            }
+            return 1;
+          }
+          return prev! - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [countdown]);
 
   useEffect(() => {
     if (currentScene === "game" && startTime && !winner) {
@@ -154,13 +188,14 @@ function App() {
   const resetGame = () => {
     setProgress1(0);
     setProgress2(0);
-    setTutorialBar1(0); // Resetear barra tutorial 1
-    setTutorialBar2(0); // Resetear barra tutorial 2
+    setTutorialBar1(0);
+    setTutorialBar2(0);
     setStartTime(null);
     setElapsed(0);
     setWinner(null);
     setPlayer1Ready(false);
     setPlayer2Ready(false);
+    setCountdown(null);
     setCurrentScene("slideshow");
   };
 
@@ -178,6 +213,69 @@ function App() {
   const time = formatTime(elapsed);
 
   // 🎬 RENDER ESCENAS
+  if (currentScene === "frame14") {
+    return (
+      <div className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] flex flex-col items-center justify-center">
+        <img
+          src={LalaLogo}
+          alt="Lala Logo"
+          className="absolute top-8 right-12 w-[150px] object-contain"
+        />
+        <div className="flex gap-24 items-end">
+          {/* Jugador 1 */}
+          <div className="h-full flex flex-col items-center justify-center">
+            <img src={Frame14_text} alt="Instrucciones" className="w-[8rem]" />
+            {countdown !== null && (
+              <div className="mt-4 text-[#a19246] text-[120px] font-bebas">
+                {countdown}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center gap-6">
+            <div className="progress-bar relative w-24 h-[700px] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
+              <div
+                className="w-full rounded-[20px] transition-all duration-300 ease-in-out"
+                style={{
+                  height: `${tutorialBar1}%`,
+                  marginBottom: "6px",
+                  background:
+                    "linear-gradient(to top, #fcb045 0%, #fd7e37 100%)",
+                  boxShadow: "0 8px 20px rgba(255, 167, 36, 0.3)",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Jugador 2 */}
+          <div className="flex flex-col items-center gap-6">
+            <div className="progress-bar relative w-24 h-[700px] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
+              <div
+                className="w-full rounded-[20px] transition-all duration-300 ease-in-out"
+                style={{
+                  height: `${tutorialBar2}%`,
+                  marginBottom: "6px",
+                  background:
+                    "linear-gradient(to top, #fcb045 0%, #fd7e37 100%)",
+                  boxShadow: "0 8px 20px rgba(255, 167, 36, 0.3)",
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="h-full flex flex-col items-center justify-center">
+            <img src={Frame14_text} alt="Instrucciones" className="w-[8rem]" />
+            {countdown !== null && (
+              <div className="mt-4 text-[#a19246] text-[120px] font-bebas">
+                {countdown}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (currentScene === "slideshow") {
     return (
       <div className="relative w-screen h-screen">
