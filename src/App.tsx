@@ -10,6 +10,9 @@ import Player1ReadyImg from "./assets/player1_ready.jpeg";
 import Player2ReadyImg from "./assets/player2_ready.jpeg";
 import Frame14_text from "./assets/frame14_text.png";
 import frame12Image from "./assets/frame12.png";
+// Importar imágenes de victoria
+import Player1WinImg from "./assets/player1_win.png";
+import Player2WinImg from "./assets/player2_win.png";
 
 function App() {
   const [currentScene, setCurrentScene] = useState<
@@ -20,6 +23,7 @@ function App() {
     | "frame13"
     | "frame14"
     | "frame12"
+    | "winner" // Nueva escena para mostrar al ganador
   >("slideshow");
 
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -36,10 +40,49 @@ function App() {
   const intervalRef = useRef<number | null>(null);
   const readyPlayerRef = useRef<0 | 1 | 2 | null>(null);
   const countdownRef = useRef<number | null>(null);
+  // Estado para el tiempo de visualización del ganador (en milisegundos)
+  const [winnerDisplayTime, setWinnerDisplayTime] = useState(20000); // 20 segundos (fácil de modificar)
 
   // Configuración de tiempo del juego
-  const gameTimeLimit = 60000; // 1 minuto en milisegundos (fácil de modificar)
+  const gameTimeLimit = 60000; // 1 minuto en milisegundos
   const [timeRemaining, setTimeRemaining] = useState(gameTimeLimit);
+
+  // Efecto CORREGIDO para manejar la transición al ganador y luego volver al inicio
+  useEffect(() => {
+    let winnerTimer: number;
+    let switchToWinnerTimer: number;
+
+    if (winner !== null) {
+      // Solo cambiamos a winner si estamos en game
+      if (currentScene === "game") {
+        switchToWinnerTimer = window.setTimeout(() => {
+          setCurrentScene("winner");
+        }, 1000);
+      }
+
+      // Configuramos el temporizador para volver a slideshow
+      winnerTimer = window.setTimeout(() => {
+        setPlayer1Ready(false);
+        setPlayer2Ready(false);
+        setProgress1(0);
+        setProgress2(0);
+        setTutorialBar1(0);
+        setTutorialBar2(0);
+        setTimeRemaining(gameTimeLimit);
+        setWinner(null);
+        setCurrentScene("slideshow");
+      }, winnerDisplayTime);
+    }
+
+    return () => {
+      if (winnerTimer) {
+        clearTimeout(winnerTimer);
+      }
+      if (switchToWinnerTimer) {
+        clearTimeout(switchToWinnerTimer);
+      }
+    };
+  }, [winner, winnerDisplayTime]);
 
   // 🧠 WebSocket con reconexión
   useEffect(() => {
@@ -116,9 +159,13 @@ function App() {
               }
             }
           }
-        }
-
-        if (msg === "PLAYER1") {
+        } else if (msg.startsWith("FELICIDADES_")) {
+          // Mensaje para cambiar el tiempo de visualización del ganador
+          const seconds = parseInt(msg.replace("FELICIDADES_", ""), 10);
+          if (!isNaN(seconds)) {
+            setWinnerDisplayTime(seconds * 1000); // Convertir a milisegundos
+          }
+        } else if (msg === "PLAYER1") {
           if (currentScene === "game" && !winner) {
             setProgress1((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -126,8 +173,7 @@ function App() {
               return newVal;
             });
           }
-        }
-        if (msg === "PLAYER2") {
+        } else if (msg === "PLAYER2") {
           if (currentScene === "game" && !winner) {
             setProgress2((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -238,20 +284,6 @@ function App() {
     };
   };
 
-  // const resetGame = () => {
-  //   setProgress1(0);
-  //   setProgress2(0);
-  //   setTutorialBar1(0);
-  //   setTutorialBar2(0);
-  //   setStartTime(null);
-  //   setTimeRemaining(gameTimeLimit);
-  //   setWinner(null);
-  //   setPlayer1Ready(false);
-  //   setPlayer2Ready(false);
-  //   setCountdown(null);
-  //   setCurrentScene("slideshow");
-  // };
-
   const handleGlobalClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest(".progress-bar")) return;
@@ -340,6 +372,20 @@ function App() {
             )}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Nueva vista para mostrar al ganador
+  if (currentScene === "winner") {
+    const winnerImage = winner === 1 ? Player1WinImg : Player2WinImg;
+    return (
+      <div className="w-screen h-screen flex items-center justify-center">
+        <img
+          src={winnerImage}
+          alt={`Player ${winner} wins`}
+          className="max-w-full max-h-full object-contain"
+        />
       </div>
     );
   }
@@ -440,22 +486,7 @@ function App() {
         className="absolute top-8 right-12 w-[150px] object-contain"
       />
 
-      {/* Ganador */}
-      {winner && (
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 px-8 py-4 bg-white text-[#a8842b] text-4xl rounded-xl shadow-md flex items-center gap-4 z-20">
-          🏆 ¡JUGADOR {winner} GANÓ!
-        </div>
-      )}
-
-      {/* Reiniciar */}
-      {/* {winner && (
-        <button
-          className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-white text-[#a8842b] text-xl px-6 py-3 rounded-full shadow-md z-20"
-          onClick={resetGame}
-        >
-          REINICIAR JUEGO
-        </button>
-      )} */}
+      {/* Ganador: Ya no mostramos el banner en la escena del juego, porque ahora cambiamos a la escena "winner" */}
 
       <div className="max-w-[1440px] w-full h-[90vh] grid grid-cols-3 items-center px-12">
         {/* Izquierda */}
