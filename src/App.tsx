@@ -9,7 +9,7 @@ import StandbyScene from "./scenes/StandbyScene";
 import Player1ReadyImg from "./assets/player1_ready.jpeg";
 import Player2ReadyImg from "./assets/player2_ready.jpeg";
 import Frame14_text from "./assets/frame14_text.png";
-import frame12Image from "./assets/frame12.png"; // Importar la imagen para FRAME12
+import frame12Image from "./assets/frame12.png";
 
 function App() {
   const [currentScene, setCurrentScene] = useState<
@@ -19,7 +19,7 @@ function App() {
     | "game"
     | "frame13"
     | "frame14"
-    | "frame12" // Nuevo estado para FRAME12
+    | "frame12"
   >("slideshow");
 
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -36,6 +36,10 @@ function App() {
   const intervalRef = useRef<number | null>(null);
   const readyPlayerRef = useRef<0 | 1 | 2 | null>(null);
   const countdownRef = useRef<number | null>(null);
+
+  // Configuración de tiempo del juego
+  const gameTimeLimit = 60000; // 1 minuto en milisegundos (fácil de modificar)
+  const [timeRemaining, setTimeRemaining] = useState(gameTimeLimit);
 
   // 🧠 WebSocket con reconexión
   useEffect(() => {
@@ -74,27 +78,64 @@ function App() {
           setCurrentScene("frame14");
           setCountdown(3);
         } else if (msg === "FRAME12") {
-          // Nuevo mensaje para FRAME12
           setCurrentScene("frame12");
         } else if (msg === "FRAME5") {
-          // Nuevo mensaje para FRAME5
+          // Reiniciar estados del juego
+          setProgress1(0);
+          setProgress2(0);
+          setWinner(null);
+          setTimeRemaining(gameTimeLimit);
           setCurrentScene("game");
         } else if (msg === "CONTINUE") {
           setCountdown(null);
         } else if (msg.startsWith("BARRA1_")) {
           const value = parseInt(msg.replace("BARRA1_", ""), 10);
           if (!isNaN(value)) {
-            setTutorialBar1(value);
+            // Actualizar barra según la escena actual
+            if (currentScene === "tutorial" || currentScene === "frame14") {
+              setTutorialBar1(value);
+            } else if (currentScene === "game") {
+              setProgress1(value);
+              // Verificar si ganó
+              if (value >= 100 && !winner) {
+                setWinner(1);
+              }
+            }
           }
         } else if (msg.startsWith("BARRA2_")) {
           const value = parseInt(msg.replace("BARRA2_", ""), 10);
           if (!isNaN(value)) {
-            setTutorialBar2(value);
+            // Actualizar barra según la escena actual
+            if (currentScene === "tutorial" || currentScene === "frame14") {
+              setTutorialBar2(value);
+            } else if (currentScene === "game") {
+              setProgress2(value);
+              // Verificar si ganó
+              if (value >= 100 && !winner) {
+                setWinner(2);
+              }
+            }
           }
         }
 
-        if (msg === "PLAYER1") increase(1);
-        if (msg === "PLAYER2") increase(2);
+        if (msg === "PLAYER1") {
+          if (currentScene === "game" && !winner) {
+            setProgress1((prev) => {
+              const newVal = Math.min(prev + 5, 100);
+              if (newVal >= 100) setWinner(1);
+              return newVal;
+            });
+          }
+        }
+        if (msg === "PLAYER2") {
+          if (currentScene === "game" && !winner) {
+            setProgress2((prev) => {
+              const newVal = Math.min(prev + 5, 100);
+              if (newVal >= 100) setWinner(2);
+              return newVal;
+            });
+          }
+        }
       };
 
       socket.onerror = (err) => {
@@ -125,9 +166,9 @@ function App() {
         socket.close();
       }
     };
-  }, []);
+  }, [currentScene, winner]);
 
-  // Efecto para la cuenta regresiva
+  // Efecto para la cuenta regresiva de FRAME14
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
       countdownRef.current = window.setInterval(() => {
@@ -152,35 +193,37 @@ function App() {
     };
   }, [countdown]);
 
+  // Efecto para el temporizador del juego
   useEffect(() => {
-    if (currentScene === "game" && startTime && !winner) {
+    if (currentScene === "game" && !winner) {
+      const start = Date.now();
       intervalRef.current = window.setInterval(() => {
-        setElapsed(Date.now() - startTime.getTime());
+        const now = Date.now();
+        const elapsedTime = now - start;
+        const remaining = Math.max(0, gameTimeLimit - elapsedTime);
+        setTimeRemaining(remaining);
+
+        // Si el tiempo se acaba, determinar ganador
+        if (remaining <= 0 && !winner) {
+          if (progress1 > progress2) {
+            setWinner(1);
+          } else if (progress2 > progress1) {
+            setWinner(2);
+          } else {
+            // En caso de empate, elegir un ganador arbitrario
+            setWinner(1);
+          }
+        }
       }, 10);
     }
+
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [startTime, winner, currentScene]);
-
-  const increase = (player: number) => {
-    if (!startTime) setStartTime(new Date());
-    if (winner) return;
-
-    if (player === 1) {
-      setProgress1((prev) => {
-        const newVal = Math.min(prev + 5, 100);
-        if (newVal >= 100) setWinner(1);
-        return newVal;
-      });
-    } else {
-      setProgress2((prev) => {
-        const newVal = Math.min(prev + 5, 100);
-        if (newVal >= 100) setWinner(2);
-        return newVal;
-      });
-    }
-  };
+  }, [currentScene, winner, progress1, progress2]);
 
   const formatTime = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -195,19 +238,19 @@ function App() {
     };
   };
 
-  const resetGame = () => {
-    setProgress1(0);
-    setProgress2(0);
-    setTutorialBar1(0);
-    setTutorialBar2(0);
-    setStartTime(null);
-    setElapsed(0);
-    setWinner(null);
-    setPlayer1Ready(false);
-    setPlayer2Ready(false);
-    setCountdown(null);
-    setCurrentScene("slideshow");
-  };
+  // const resetGame = () => {
+  //   setProgress1(0);
+  //   setProgress2(0);
+  //   setTutorialBar1(0);
+  //   setTutorialBar2(0);
+  //   setStartTime(null);
+  //   setTimeRemaining(gameTimeLimit);
+  //   setWinner(null);
+  //   setPlayer1Ready(false);
+  //   setPlayer2Ready(false);
+  //   setCountdown(null);
+  //   setCurrentScene("slideshow");
+  // };
 
   const handleGlobalClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -220,7 +263,7 @@ function App() {
     }
   };
 
-  const time = formatTime(elapsed);
+  const time = formatTime(timeRemaining);
 
   // 🎬 RENDER ESCENAS
 
@@ -405,14 +448,14 @@ function App() {
       )}
 
       {/* Reiniciar */}
-      {winner && (
+      {/* {winner && (
         <button
           className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-white text-[#a8842b] text-xl px-6 py-3 rounded-full shadow-md z-20"
           onClick={resetGame}
         >
           REINICIAR JUEGO
         </button>
-      )}
+      )} */}
 
       <div className="max-w-[1440px] w-full h-[90vh] grid grid-cols-3 items-center px-12">
         {/* Izquierda */}
