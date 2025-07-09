@@ -10,7 +10,6 @@ import Player1ReadyImg from "./assets/player1_ready.jpeg";
 import Player2ReadyImg from "./assets/player2_ready.png";
 import Frame14_text from "./assets/frame14_text.png";
 import frame12Image from "./assets/frame12.png";
-// Importar imágenes de victoria
 import Player1WinImg from "./assets/player1_win.png";
 import Player2WinImg from "./assets/player2_win.png";
 
@@ -23,7 +22,7 @@ function App() {
     | "frame13"
     | "frame14"
     | "frame12"
-    | "winner" // Nueva escena para mostrar al ganador
+    | "winner"
   >("slideshow");
 
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -40,27 +39,35 @@ function App() {
   const intervalRef = useRef<number | null>(null);
   const readyPlayerRef = useRef<0 | 1 | 2 | null>(null);
   const countdownRef = useRef<number | null>(null);
-  // Estado para el tiempo de visualización del ganador (en milisegundos)
-  const [winnerDisplayTime, setWinnerDisplayTime] = useState(20000); // 20 segundos (fácil de modificar)
+  const [winnerDisplayTime, setWinnerDisplayTime] = useState(20000);
 
-  // Configuración de tiempo del juego
-  const gameTimeLimit = 60000; // 1 minuto en milisegundos
+  // Referencias para acceder a los estados actuales en los callbacks de WebSocket
+  const currentSceneRef = useRef(currentScene);
+  const winnerRef = useRef(winner);
+
+  // Actualizar referencias cuando cambian los estados
+  useEffect(() => {
+    currentSceneRef.current = currentScene;
+  }, [currentScene]);
+
+  useEffect(() => {
+    winnerRef.current = winner;
+  }, [winner]);
+
+  const gameTimeLimit = 60000;
   const [timeRemaining, setTimeRemaining] = useState(gameTimeLimit);
 
-  // Efecto CORREGIDO para manejar la transición al ganador y luego volver al inicio
   useEffect(() => {
     let winnerTimer: number;
     let switchToWinnerTimer: number;
 
     if (winner !== null) {
-      // Solo cambiamos a winner si estamos en game
       if (currentScene === "game") {
         switchToWinnerTimer = window.setTimeout(() => {
           setCurrentScene("winner");
         }, 1000);
       }
 
-      // Configuramos el temporizador para volver a slideshow
       winnerTimer = window.setTimeout(() => {
         setPlayer1Ready(false);
         setPlayer2Ready(false);
@@ -75,16 +82,12 @@ function App() {
     }
 
     return () => {
-      if (winnerTimer) {
-        clearTimeout(winnerTimer);
-      }
-      if (switchToWinnerTimer) {
-        clearTimeout(switchToWinnerTimer);
-      }
+      if (winnerTimer) clearTimeout(winnerTimer);
+      if (switchToWinnerTimer) clearTimeout(switchToWinnerTimer);
     };
   }, [winner, winnerDisplayTime]);
 
-  // 🧠 WebSocket con reconexión
+  // 🧠 WebSocket con reconexión (corregido)
   useEffect(() => {
     let socket: WebSocket;
     let reconnectAttempts = 0;
@@ -106,40 +109,44 @@ function App() {
         const msg = event.data.trim();
         console.log("📨 Mensaje WebSocket recibido:", msg);
 
-        if (msg === "PLAYER1_READY") {
+        // Normalizar mensajes con espacios
+        const normalizedMsg = msg.replace(/\s/g, "");
+
+        // Acceder a los valores actuales a través de referencias
+        const currentScene = currentSceneRef.current;
+        const winner = winnerRef.current;
+
+        if (normalizedMsg === "PLAYER1_READY") {
           setPlayer1Ready(true);
-        } else if (msg === "PLAYER2_READY") {
+        } else if (normalizedMsg === "PLAYER2_READY") {
           setPlayer2Ready(true);
-        } else if (msg === "BOTH_PLAYERS_READY") {
+        } else if (normalizedMsg === "BOTH_PLAYERS_READY") {
           setPlayer1Ready(true);
           setPlayer2Ready(true);
           readyPlayerRef.current = 0;
           setCurrentScene("playerReady");
-        } else if (msg === "FRAME13") {
+        } else if (normalizedMsg === "FRAME13") {
           setCurrentScene("tutorial");
-        } else if (msg === "FRAME14") {
+        } else if (normalizedMsg === "FRAME14") {
           setCurrentScene("frame14");
           setCountdown(3);
-        } else if (msg === "FRAME12") {
+        } else if (normalizedMsg === "FRAME12") {
           setCurrentScene("frame12");
-        } else if (msg === "FRAME5") {
-          // Reiniciar estados del juego
+        } else if (normalizedMsg === "FRAME5") {
           setProgress1(0);
           setProgress2(0);
           setWinner(null);
           setTimeRemaining(gameTimeLimit);
           setCurrentScene("game");
-        } else if (msg === "CONTINUE") {
+        } else if (normalizedMsg === "CONTINUE") {
           setCountdown(null);
         } else if (msg.startsWith("BARRA1_")) {
           const value = parseInt(msg.replace("BARRA1_", ""), 10);
           if (!isNaN(value)) {
-            // Actualizar barra según la escena actual
             if (currentScene === "tutorial" || currentScene === "frame14") {
               setTutorialBar1(value);
             } else if (currentScene === "game") {
               setProgress1(value);
-              // Verificar si ganó
               if (value >= 100 && !winner) {
                 setWinner(1);
               }
@@ -148,24 +155,21 @@ function App() {
         } else if (msg.startsWith("BARRA2_")) {
           const value = parseInt(msg.replace("BARRA2_", ""), 10);
           if (!isNaN(value)) {
-            // Actualizar barra según la escena actual
             if (currentScene === "tutorial" || currentScene === "frame14") {
               setTutorialBar2(value);
             } else if (currentScene === "game") {
               setProgress2(value);
-              // Verificar si ganó
               if (value >= 100 && !winner) {
                 setWinner(2);
               }
             }
           }
         } else if (msg.startsWith("FELICIDADES_")) {
-          // Mensaje para cambiar el tiempo de visualización del ganador
           const seconds = parseInt(msg.replace("FELICIDADES_", ""), 10);
           if (!isNaN(seconds)) {
-            setWinnerDisplayTime(seconds * 1000); // Convertir a milisegundos
+            setWinnerDisplayTime(seconds * 1000);
           }
-        } else if (msg === "PLAYER1") {
+        } else if (normalizedMsg === "PLAYER1") {
           if (currentScene === "game" && !winner) {
             setProgress1((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -173,7 +177,7 @@ function App() {
               return newVal;
             });
           }
-        } else if (msg === "PLAYER2") {
+        } else if (normalizedMsg === "PLAYER2") {
           if (currentScene === "game" && !winner) {
             setProgress2((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -212,9 +216,8 @@ function App() {
         socket.close();
       }
     };
-  }, [currentScene, winner]);
+  }, []); // Dependencias vacías = solo al montar
 
-  // Efecto para la cuenta regresiva de FRAME14
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
       countdownRef.current = window.setInterval(() => {
@@ -239,7 +242,6 @@ function App() {
     };
   }, [countdown]);
 
-  // Efecto para el temporizador del juego
   useEffect(() => {
     if (currentScene === "game" && !winner) {
       const start = Date.now();
@@ -249,14 +251,12 @@ function App() {
         const remaining = Math.max(0, gameTimeLimit - elapsedTime);
         setTimeRemaining(remaining);
 
-        // Si el tiempo se acaba, determinar ganador
         if (remaining <= 0 && !winner) {
           if (progress1 > progress2) {
             setWinner(1);
           } else if (progress2 > progress1) {
             setWinner(2);
           } else {
-            // En caso de empate, elegir un ganador arbitrario
             setWinner(1);
           }
         }
@@ -297,9 +297,6 @@ function App() {
 
   const time = formatTime(timeRemaining);
 
-  // 🎬 RENDER ESCENAS
-
-  // Vista para FRAME12
   if (currentScene === "frame12") {
     return (
       <div className="w-screen h-screen flex items-center justify-center">
@@ -312,7 +309,6 @@ function App() {
     );
   }
 
-  // Vista para FRAME14
   if (currentScene === "frame14") {
     return (
       <div className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] flex flex-col items-center justify-center">
@@ -322,7 +318,6 @@ function App() {
           className="absolute top-8 right-12 w-[150px] object-contain"
         />
         <div className="flex gap-24 items-end">
-          {/* Jugador 1 */}
           <div className="h-full flex flex-col items-center justify-center">
             <img src={Frame14_text} alt="Instrucciones" className="w-[8rem]" />
             {countdown !== null && (
@@ -347,7 +342,6 @@ function App() {
             </div>
           </div>
 
-          {/* Jugador 2 */}
           <div className="flex flex-col items-center gap-6">
             <div className="progress-bar relative w-24 h-[700px] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
               <div
@@ -376,7 +370,6 @@ function App() {
     );
   }
 
-  // Nueva vista para mostrar al ganador
   if (currentScene === "winner") {
     const winnerImage = winner === 1 ? Player1WinImg : Player2WinImg;
     return (
@@ -432,7 +425,6 @@ function App() {
             alt="Lala Logo"
             className="absolute top-8 right-12 w-[150px] object-contain"
           />
-          {/* Barra Jugador 1 */}
           <div className="h-full grid place-items-center">
             <img src={Frame13_text} alt="Clock" className="w-[10rem]" />
           </div>
@@ -450,7 +442,6 @@ function App() {
               />
             </div>
           </div>
-          {/* Barra Jugador 2 */}
           <div className="flex flex-col items-center gap-4">
             <div className="progress-bar relative w-24 h-[700px] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
               <div
@@ -472,26 +463,20 @@ function App() {
       </div>
     );
 
-  // 🎮 ESCENA DEL JUEGO (FRAME5)
   return (
     <div
       ref={containerRef}
       onClick={handleGlobalClick}
       className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] text-[#a19246] font-bebas flex items-center justify-center overflow-hidden relative"
     >
-      {/* Logo */}
       <img
         src={LalaLogo}
         alt="Lala Logo"
         className="absolute top-8 right-12 w-[150px] object-contain"
       />
 
-      {/* Ganador: Ya no mostramos el banner en la escena del juego, porque ahora cambiamos a la escena "winner" */}
-
       <div className="max-w-[1440px] w-full h-[90vh] grid grid-cols-3 items-center px-12">
-        {/* Izquierda */}
         <div className="flex flex-col justify-center h-full items-end text-right gap-32">
-          {/* TIEMPO */}
           <div className="space-y-1 pt-20  ">
             <div className="flex flex-col items-end gap-1">
               <img src={ClockIcon} alt="Clock" className="w-10 h-10" />
@@ -501,7 +486,6 @@ function App() {
             <div className="text-[80px] leading-[80px] -mt-4">{time.ms}</div>
           </div>
 
-          {/* JUGADOR */}
           <div className="space-y-1 pb-[6px]  ">
             <div className="text-[36px]">JUGADOR</div>
             <div className="text-[72px] flex items-center justify-end gap-2">
@@ -510,7 +494,6 @@ function App() {
           </div>
         </div>
 
-        {/* Barras */}
         <div className="flex justify-center gap-40 items-center h-full relative z-10">
           <div className="progress-bar relative w-[90px] h-[80%] bg-[#f6f5f2] rounded-[20px] shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] flex items-end">
             <div
@@ -537,9 +520,7 @@ function App() {
           </div>
         </div>
 
-        {/* Derecha */}
         <div className="flex flex-col justify-center h-full items-start text-left gap-32">
-          {/* TIEMPO */}
           <div className="space-y-1 pt-20 ">
             <div className="flex flex-col items-start gap-1">
               <img src={ClockIcon} alt="Clock" className="w-10 h-10" />
@@ -549,7 +530,6 @@ function App() {
             <div className="text-[80px] leading-[80px] -mt-4">{time.ms}</div>
           </div>
 
-          {/* JUGADOR */}
           <div className="space-y-1 pb-[6px] ">
             <div className="text-[36px]">JUGADOR</div>
             <div className="text-[72px] flex items-center justify-start gap-2">
