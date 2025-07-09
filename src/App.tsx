@@ -9,10 +9,17 @@ import StandbyScene from "./scenes/StandbyScene";
 import Player1ReadyImg from "./assets/player1_ready.jpeg";
 import Player2ReadyImg from "./assets/player2_ready.jpeg";
 import Frame14_text from "./assets/frame14_text.png";
+import frame12Image from "./assets/frame12.png"; // Importar la imagen para FRAME12
 
 function App() {
   const [currentScene, setCurrentScene] = useState<
-    "slideshow" | "playerReady" | "tutorial" | "game" | "frame13" | "frame14"
+    | "slideshow"
+    | "playerReady"
+    | "tutorial"
+    | "game"
+    | "frame13"
+    | "frame14"
+    | "frame12" // Nuevo estado para FRAME12
   >("slideshow");
 
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -65,10 +72,14 @@ function App() {
           setCurrentScene("tutorial");
         } else if (msg === "FRAME14") {
           setCurrentScene("frame14");
-          // Iniciar cuenta regresiva al entrar a FRAME14
           setCountdown(3);
+        } else if (msg === "FRAME12") {
+          // Nuevo mensaje para FRAME12
+          setCurrentScene("frame12");
+        } else if (msg === "FRAME5") {
+          // Nuevo mensaje para FRAME5
+          setCurrentScene("game");
         } else if (msg === "CONTINUE") {
-          // Mensaje para continuar después de la cuenta regresiva
           setCountdown(null);
         } else if (msg.startsWith("BARRA1_")) {
           const value = parseInt(msg.replace("BARRA1_", ""), 10);
@@ -122,7 +133,6 @@ function App() {
       countdownRef.current = window.setInterval(() => {
         setCountdown((prev) => {
           if (prev === 1) {
-            // Detener en 1 hasta recibir mensaje CONTINUE
             if (countdownRef.current) {
               clearInterval(countdownRef.current);
               countdownRef.current = null;
@@ -213,6 +223,21 @@ function App() {
   const time = formatTime(elapsed);
 
   // 🎬 RENDER ESCENAS
+
+  // Vista para FRAME12
+  if (currentScene === "frame12") {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center">
+        <img
+          src={frame12Image}
+          alt="Frame 12"
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
+
+  // Vista para FRAME14
   if (currentScene === "frame14") {
     return (
       <div className="w-screen h-screen bg-gradient-to-br from-[#fffdf4] via-[#fff9e9] to-[#fff5d8] flex flex-col items-center justify-center">
@@ -358,7 +383,7 @@ function App() {
       </div>
     );
 
-  // 🎮 ESCENA DEL JUEGO
+  // 🎮 ESCENA DEL JUEGO (FRAME5)
   return (
     <div
       ref={containerRef}

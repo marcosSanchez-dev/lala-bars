@@ -18,7 +18,7 @@ export default function StandbyScene() {
   }, []);
 
   return (
-    <div className="w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden">
+    <div className="w-screen h-screen flex items-center justify-center relative overflow-hidden">
       {slides.map((src, index) => (
         <img
           key={src}
