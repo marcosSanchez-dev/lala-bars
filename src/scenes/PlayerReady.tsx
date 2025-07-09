@@ -9,25 +9,31 @@ interface PlayerReadyProps {
 export default function PlayerReady({ player }: PlayerReadyProps) {
   return (
     <div className="w-screen h-screen bg-[#AD8A2C] flex">
+      <div className="w-1/2 h-full flex justify-end">
+        {player === 1 && (
+          <img
+            src={Player1ReadyImg}
+            className="h-full object-contain"
+            alt="Jugador 1 listo"
+            style={{ maxWidth: "100%" }}
+          />
+        )}
+      </div>
+      <div className="w-1/2 h-full flex justify-start">
+        {player === 2 && (
+          <img
+            src={Player2ReadyImg}
+            className="h-full object-contain"
+            alt="Jugador 2 listo"
+            style={{ maxWidth: "100%" }}
+          />
+        )}
+      </div>
       {player === 0 && (
         <img
           src={BothReadyImg}
-          className="w-full h-full object-contain"
+          className="absolute inset-0 w-full h-full object-contain"
           alt="Ambos jugadores listos"
-        />
-      )}
-      {player === 1 && (
-        <img
-          src={Player1ReadyImg}
-          className="w-1/2 h-full object-contain"
-          alt="Jugador 1 listo"
-        />
-      )}
-      {player === 2 && (
-        <img
-          src={Player2ReadyImg}
-          className="w-1/2 h-full object-contain"
-          alt="Jugador 2 listo"
         />
       )}
     </div>

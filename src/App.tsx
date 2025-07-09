@@ -164,20 +164,28 @@ function App() {
     return (
       <div className="relative w-screen h-screen">
         <StandbyScene />
-        {player1Ready && (
-          <img
-            src={Player1ReadyImg}
-            className="absolute top-0 left-0 w-1/2 h-full object-contain z-20"
-            alt="Jugador 1 listo"
-          />
-        )}
-        {player2Ready && (
-          <img
-            src={Player2ReadyImg}
-            className="absolute top-0 right-0 w-1/2 h-full object-contain z-20"
-            alt="Jugador 2 listo"
-          />
-        )}
+        <div className="absolute inset-0 flex z-20">
+          <div className="w-1/2 h-full flex justify-end">
+            {player1Ready && (
+              <img
+                src={Player1ReadyImg}
+                className="h-full object-contain"
+                alt="Jugador 1 listo"
+                style={{ maxWidth: "100%" }}
+              />
+            )}
+          </div>
+          <div className="w-1/2 h-full flex justify-start">
+            {player2Ready && (
+              <img
+                src={Player2ReadyImg}
+                className="h-full object-contain"
+                alt="Jugador 2 listo"
+                style={{ maxWidth: "100%" }}
+              />
+            )}
+          </div>
+        </div>
       </div>
     );
   }
