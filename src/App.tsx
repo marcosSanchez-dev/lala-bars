@@ -5,13 +5,16 @@ import RunIcon from "./assets/figure.run.png";
 import LalaLogo from "./assets/Lala_Logo.png";
 import PlayerReady from "./scenes/PlayerReady";
 import StandbyScene from "./scenes/StandbyScene";
+import Player1ReadyImg from "./assets/player1_ready.jpeg";
+import Player2ReadyImg from "./assets/player2_ready.jpeg";
 
 function App() {
   const [currentScene, setCurrentScene] = useState<
     "slideshow" | "playerReady" | "tutorial" | "game"
   >("slideshow");
 
-  const [readyPlayer, setReadyPlayer] = useState<0 | 1 | 2 | null>(null);
+  const [player1Ready, setPlayer1Ready] = useState(false);
+  const [player2Ready, setPlayer2Ready] = useState(false);
   const [progress1, setProgress1] = useState(0);
   const [progress2, setProgress2] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -19,6 +22,7 @@ function App() {
   const [winner, setWinner] = useState<null | number>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const readyPlayerRef = useRef<0 | 1 | 2 | null>(null);
 
   // 🧠 WebSocket con reconexión
   useEffect(() => {
@@ -43,13 +47,13 @@ function App() {
         console.log("📨 Mensaje WebSocket recibido:", msg);
 
         if (msg === "PLAYER1_READY") {
-          setReadyPlayer(1);
-          setCurrentScene("playerReady");
+          setPlayer1Ready(true);
         } else if (msg === "PLAYER2_READY") {
-          setReadyPlayer(2);
-          setCurrentScene("playerReady");
+          setPlayer2Ready(true);
         } else if (msg === "BOTH_PLAYERS_READY") {
-          setReadyPlayer(0); // 0 indica ambos
+          setPlayer1Ready(true);
+          setPlayer2Ready(true);
+          readyPlayerRef.current = 0;
           setCurrentScene("playerReady");
           setTimeout(() => setCurrentScene("tutorial"), 2000);
         }
@@ -137,7 +141,8 @@ function App() {
     setStartTime(null);
     setElapsed(0);
     setWinner(null);
-    setReadyPlayer(null);
+    setPlayer1Ready(false);
+    setPlayer2Ready(false);
     setCurrentScene("slideshow");
   };
 
@@ -155,9 +160,31 @@ function App() {
   const time = formatTime(elapsed);
 
   // 🎬 RENDER ESCENAS
-  if (currentScene === "slideshow") return <StandbyScene />;
-  if (currentScene === "playerReady" && readyPlayer !== null)
-    return <PlayerReady player={readyPlayer} />;
+  if (currentScene === "slideshow") {
+    return (
+      <div className="relative w-screen h-screen">
+        <StandbyScene />
+        {player1Ready && (
+          <img
+            src={Player1ReadyImg}
+            className="absolute top-0 left-0 w-1/2 h-full object-contain z-20"
+            alt="Jugador 1 listo"
+          />
+        )}
+        {player2Ready && (
+          <img
+            src={Player2ReadyImg}
+            className="absolute top-0 right-0 w-1/2 h-full object-contain z-20"
+            alt="Jugador 2 listo"
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (currentScene === "playerReady" && readyPlayerRef.current !== null)
+    return <PlayerReady player={readyPlayerRef.current} />;
+
   if (currentScene === "tutorial")
     return (
       <div className="w-screen h-screen bg-blue-900 text-white flex flex-col items-center justify-center text-5xl">

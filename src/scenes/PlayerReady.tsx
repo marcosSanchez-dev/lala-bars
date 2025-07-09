@@ -1,4 +1,5 @@
-import Player1ReadyImg from "../assets/player1_ready.png";
+import Player1ReadyImg from "../assets/player1_ready.jpeg";
+import Player2ReadyImg from "../assets/player2_ready.jpeg";
 import BothReadyImg from "../assets/both_ready.png";
 
 interface PlayerReadyProps {
@@ -7,25 +8,25 @@ interface PlayerReadyProps {
 
 export default function PlayerReady({ player }: PlayerReadyProps) {
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-[#AD8A2C] relative">
+    <div className="w-screen h-screen bg-[#AD8A2C] flex">
       {player === 0 && (
         <img
           src={BothReadyImg}
-          className="h-full object-contain"
+          className="w-full h-full object-contain"
           alt="Ambos jugadores listos"
         />
       )}
       {player === 1 && (
         <img
           src={Player1ReadyImg}
-          className="h-full object-contain"
+          className="w-1/2 h-full object-contain"
           alt="Jugador 1 listo"
         />
       )}
       {player === 2 && (
         <img
-          src={Player1ReadyImg}
-          className="h-full object-contain"
+          src={Player2ReadyImg}
+          className="w-1/2 h-full object-contain"
           alt="Jugador 2 listo"
         />
       )}
