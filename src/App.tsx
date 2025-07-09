@@ -7,7 +7,7 @@ import LalaLogo from "./assets/Lala_Logo.png";
 import PlayerReady from "./scenes/PlayerReady";
 import StandbyScene from "./scenes/StandbyScene";
 import Player1ReadyImg from "./assets/player1_ready.jpeg";
-import Player2ReadyImg from "./assets/player2_ready.jpeg";
+import Player2ReadyImg from "./assets/player2_ready.png";
 import Frame14_text from "./assets/frame14_text.png";
 import frame12Image from "./assets/frame12.png";
 // Importar imágenes de victoria

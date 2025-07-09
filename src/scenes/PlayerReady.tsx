@@ -1,5 +1,5 @@
 import Player1ReadyImg from "../assets/player1_ready.jpeg";
-import Player2ReadyImg from "../assets/player2_ready.jpeg";
+import Player2ReadyImg from "../assets/player2_ready.png";
 import BothReadyImg from "../assets/both_ready.png";
 
 interface PlayerReadyProps {
