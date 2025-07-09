@@ -109,39 +109,46 @@ function App() {
         const msg = event.data.trim();
         console.log("📨 Mensaje WebSocket recibido:", msg);
 
-        // Normalizar mensajes con espacios
-        const normalizedMsg = msg.replace(/\s/g, "");
-
         // Acceder a los valores actuales a través de referencias
         const currentScene = currentSceneRef.current;
         const winner = winnerRef.current;
 
-        if (normalizedMsg === "PLAYER1_READY") {
+        // Manejador de mensajes con nombres reducidos
+        if (msg === "P1R") {
+          // PLAYER1_READY
           setPlayer1Ready(true);
-        } else if (normalizedMsg === "PLAYER2_READY") {
+        } else if (msg === "P2R") {
+          // PLAYER2_READY
           setPlayer2Ready(true);
-        } else if (normalizedMsg === "BOTH_PLAYERS_READY") {
+        } else if (msg === "BPR") {
+          // BOTH_PLAYERS_READY
           setPlayer1Ready(true);
           setPlayer2Ready(true);
           readyPlayerRef.current = 0;
           setCurrentScene("playerReady");
-        } else if (normalizedMsg === "FRAME13") {
+        } else if (msg === "F13") {
+          // FRAME13
           setCurrentScene("tutorial");
-        } else if (normalizedMsg === "FRAME14") {
+        } else if (msg === "F14") {
+          // FRAME14
           setCurrentScene("frame14");
           setCountdown(3);
-        } else if (normalizedMsg === "FRAME12") {
+        } else if (msg === "F12") {
+          // FRAME12
           setCurrentScene("frame12");
-        } else if (normalizedMsg === "FRAME5") {
+        } else if (msg === "F5") {
+          // FRAME5
           setProgress1(0);
           setProgress2(0);
           setWinner(null);
           setTimeRemaining(gameTimeLimit);
           setCurrentScene("game");
-        } else if (normalizedMsg === "CONTINUE") {
+        } else if (msg === "CONT") {
+          // CONTINUE
           setCountdown(null);
-        } else if (msg.startsWith("BARRA1_")) {
-          const value = parseInt(msg.replace("BARRA1_", ""), 10);
+        } else if (msg.startsWith("B1_")) {
+          // BARRA1_<valor>
+          const value = parseInt(msg.replace("B1_", ""), 10);
           if (!isNaN(value)) {
             if (currentScene === "tutorial" || currentScene === "frame14") {
               setTutorialBar1(value);
@@ -152,8 +159,9 @@ function App() {
               }
             }
           }
-        } else if (msg.startsWith("BARRA2_")) {
-          const value = parseInt(msg.replace("BARRA2_", ""), 10);
+        } else if (msg.startsWith("B2_")) {
+          // BARRA2_<valor>
+          const value = parseInt(msg.replace("B2_", ""), 10);
           if (!isNaN(value)) {
             if (currentScene === "tutorial" || currentScene === "frame14") {
               setTutorialBar2(value);
@@ -164,12 +172,14 @@ function App() {
               }
             }
           }
-        } else if (msg.startsWith("FELICIDADES_")) {
-          const seconds = parseInt(msg.replace("FELICIDADES_", ""), 10);
+        } else if (msg.startsWith("FEL_")) {
+          // FELICIDADES_<segundos>
+          const seconds = parseInt(msg.replace("FEL_", ""), 10);
           if (!isNaN(seconds)) {
             setWinnerDisplayTime(seconds * 1000);
           }
-        } else if (normalizedMsg === "PLAYER1") {
+        } else if (msg === "P1") {
+          // PLAYER1
           if (currentScene === "game" && !winner) {
             setProgress1((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -177,7 +187,8 @@ function App() {
               return newVal;
             });
           }
-        } else if (normalizedMsg === "PLAYER2") {
+        } else if (msg === "P2") {
+          // PLAYER2
           if (currentScene === "game" && !winner) {
             setProgress2((prev) => {
               const newVal = Math.min(prev + 5, 100);
