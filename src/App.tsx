@@ -41,9 +41,11 @@ function App() {
   const countdownRef = useRef<number | null>(null);
   const [winnerDisplayTime, setWinnerDisplayTime] = useState(20000);
 
-  // Referencias para acceder a los estados actuales en los callbacks de WebSocket
+  // Referencias para acceder a los estados actuales
   const currentSceneRef = useRef(currentScene);
   const winnerRef = useRef(winner);
+  const progress1Ref = useRef(progress1);
+  const progress2Ref = useRef(progress2);
 
   // Actualizar referencias cuando cambian los estados
   useEffect(() => {
@@ -53,6 +55,14 @@ function App() {
   useEffect(() => {
     winnerRef.current = winner;
   }, [winner]);
+
+  useEffect(() => {
+    progress1Ref.current = progress1;
+  }, [progress1]);
+
+  useEffect(() => {
+    progress2Ref.current = progress2;
+  }, [progress2]);
 
   const gameTimeLimit = 60000;
   const [timeRemaining, setTimeRemaining] = useState(gameTimeLimit);
@@ -114,40 +124,31 @@ function App() {
         const winner = winnerRef.current;
 
         // Manejador de mensajes con nombres reducidos
-        if (msg === "P1R") {
-          // PLAYER1_READY
+        if (msg === "P1R") { // PLAYER1_READY
           setPlayer1Ready(true);
-        } else if (msg === "P2R") {
-          // PLAYER2_READY
+        } else if (msg === "P2R") { // PLAYER2_READY
           setPlayer2Ready(true);
-        } else if (msg === "BPR") {
-          // BOTH_PLAYERS_READY
+        } else if (msg === "BPR") { // BOTH_PLAYERS_READY
           setPlayer1Ready(true);
           setPlayer2Ready(true);
           readyPlayerRef.current = 0;
           setCurrentScene("playerReady");
-        } else if (msg === "F13") {
-          // FRAME13
+        } else if (msg === "F13") { // FRAME13
           setCurrentScene("tutorial");
-        } else if (msg === "F14") {
-          // FRAME14
+        } else if (msg === "F14") { // FRAME14
           setCurrentScene("frame14");
           setCountdown(3);
-        } else if (msg === "F12") {
-          // FRAME12
+        } else if (msg === "F12") { // FRAME12
           setCurrentScene("frame12");
-        } else if (msg === "F5") {
-          // FRAME5
+        } else if (msg === "F5") { // FRAME5
           setProgress1(0);
           setProgress2(0);
           setWinner(null);
           setTimeRemaining(gameTimeLimit);
           setCurrentScene("game");
-        } else if (msg === "CONT") {
-          // CONTINUE
+        } else if (msg === "CONT") { // CONTINUE
           setCountdown(null);
-        } else if (msg.startsWith("B1_")) {
-          // BARRA1_<valor>
+        } else if (msg.startsWith("B1_")) { // BARRA1_<valor>
           const value = parseInt(msg.replace("B1_", ""), 10);
           if (!isNaN(value)) {
             if (currentScene === "tutorial" || currentScene === "frame14") {
@@ -159,8 +160,7 @@ function App() {
               }
             }
           }
-        } else if (msg.startsWith("B2_")) {
-          // BARRA2_<valor>
+        } else if (msg.startsWith("B2_")) { // BARRA2_<valor>
           const value = parseInt(msg.replace("B2_", ""), 10);
           if (!isNaN(value)) {
             if (currentScene === "tutorial" || currentScene === "frame14") {
@@ -172,14 +172,12 @@ function App() {
               }
             }
           }
-        } else if (msg.startsWith("FEL_")) {
-          // FELICIDADES_<segundos>
+        } else if (msg.startsWith("FEL_")) { // FELICIDADES_<segundos>
           const seconds = parseInt(msg.replace("FEL_", ""), 10);
           if (!isNaN(seconds)) {
             setWinnerDisplayTime(seconds * 1000);
           }
-        } else if (msg === "P1") {
-          // PLAYER1
+        } else if (msg === "P1") { // PLAYER1
           if (currentScene === "game" && !winner) {
             setProgress1((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -187,8 +185,7 @@ function App() {
               return newVal;
             });
           }
-        } else if (msg === "P2") {
-          // PLAYER2
+        } else if (msg === "P2") { // PLAYER2
           if (currentScene === "game" && !winner) {
             setProgress2((prev) => {
               const newVal = Math.min(prev + 5, 100);
@@ -253,6 +250,7 @@ function App() {
     };
   }, [countdown]);
 
+  // EFECTO CORREGIDO PARA EL TEMPORIZADOR DEL JUEGO
   useEffect(() => {
     if (currentScene === "game" && !winner) {
       const start = Date.now();
@@ -262,10 +260,15 @@ function App() {
         const remaining = Math.max(0, gameTimeLimit - elapsedTime);
         setTimeRemaining(remaining);
 
-        if (remaining <= 0 && !winner) {
-          if (progress1 > progress2) {
+        // Usar referencias para acceder a los valores actuales
+        const currentProgress1 = progress1Ref.current;
+        const currentProgress2 = progress2Ref.current;
+        const currentWinner = winnerRef.current;
+
+        if (remaining <= 0 && !currentWinner) {
+          if (currentProgress1 > currentProgress2) {
             setWinner(1);
-          } else if (progress2 > progress1) {
+          } else if (currentProgress2 > currentProgress1) {
             setWinner(2);
           } else {
             setWinner(1);
@@ -280,7 +283,7 @@ function App() {
         intervalRef.current = null;
       }
     };
-  }, [currentScene, winner, progress1, progress2]);
+  }, [currentScene, winner, gameTimeLimit]); // Eliminamos progress1 y progress2 de las dependencias
 
   const formatTime = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
